@@ -1,0 +1,82 @@
+import random
+
+def fitness_function(x):
+    """Objective function to maximize: f(x) = x^2."""
+    return x ** 2
+
+def generate_population(size, lower_bound, upper_bound):
+    """Generate an initial population of random individuals."""
+    return [random.uniform(lower_bound, upper_bound) for _ in range(size)]
+
+def evaluate_fitness(population):
+    """Evaluate the fitness of each individual in the population."""
+    return [fitness_function(individual) for individual in population]
+
+def select_parents(population, fitness):
+    """Select individuals to be parents using roulette wheel selection."""
+    total_fitness = sum(fitness)
+    selection_probs = [f / total_fitness for f in fitness]
+    parents = random.choices(population, weights=selection_probs, k=2)
+    return parents
+
+def crossover(parent1, parent2):
+    """Perform single-point crossover to produce offspring."""
+    alpha = random.random()
+    offspring1 = alpha * parent1 + (1 - alpha) * parent2
+    offspring2 = alpha * parent2 + (1 - alpha) * parent1
+    return offspring1, offspring2
+
+def mutate(individual, mutation_rate, lower_bound, upper_bound):
+    """Apply mutation to an individual."""
+    if random.random() < mutation_rate:
+        mutation = random.uniform(-1, 1)  # Small random change
+        individual = min(max(individual + mutation, lower_bound), upper_bound)
+    return individual
+
+def genetic_algorithm(pop_size, generations, mutation_rate, lower_bound, upper_bound):
+    """Main function to execute the Genetic Algorithm."""
+    # Step 1: Create initial population
+    population = generate_population(pop_size, lower_bound, upper_bound)
+
+    for generation in range(generations):
+        # Step 2: Evaluate fitness
+        fitness = evaluate_fitness(population)
+
+        # Step 3: Select parents and produce offspring
+        new_population = []
+        for _ in range(pop_size // 2):
+            parent1, parent2 = select_parents(population, fitness)
+            offspring1, offspring2 = crossover(parent1, parent2)
+            offspring1 = mutate(offspring1, mutation_rate, lower_bound, upper_bound)
+            offspring2 = mutate(offspring2, mutation_rate, lower_bound, upper_bound)
+            new_population.extend([offspring1, offspring2])
+
+        population = new_population
+
+        # Track the best solution in the current generation
+        best_individual = max(population, key=fitness_function)
+        best_fitness = fitness_function(best_individual)
+        print(f"Generation {generation + 1}: Best Fitness = {best_fitness}, Best Individual = {best_individual}")
+
+    # Step 4: Output the best solution
+    best_solution = max(population, key=fitness_function)
+    return best_solution, fitness_function(best_solution)
+
+# Parameters
+POPULATION_SIZE = 20
+GENERATIONS = 50
+MUTATION_RATE = 0.1
+LOWER_BOUND = -10
+UPPER_BOUND = 10
+
+# Run the Genetic Algorithm
+best_solution, best_fitness = genetic_algorithm(POPULATION_SIZE, GENERATIONS, MUTATION_RATE, LOWER_BOUND, UPPER_BOUND)
+print(f"Best solution: x = {best_solution}, f(x) = {best_fitness}")
+
+output
+Generation 46: Best Fitness = 81.13656964079846, Best Individual = 9.007584006868793
+Generation 47: Best Fitness = 80.39498404288057, Best Individual = 8.966325002077527
+Generation 48: Best Fitness = 92.29187167475331, Best Individual = 9.606865861182476
+Generation 49: Best Fitness = 77.3067898679475, Best Individual = 8.792427984803032
+Generation 50: Best Fitness = 86.14720947609356, Best Individual = 9.281552104906462
+Best solution: x = 9.281552104906462, f(x) = 86.14720947609356
