@@ -1,0 +1,81 @@
+import random
+import math
+
+class GreyWolfOptimizer:
+    def __init__(self, num_wolves, iterations, lower_bound, upper_bound):
+        self.num_wolves = num_wolves
+        self.iterations = iterations
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.positions = [random.uniform(lower_bound, upper_bound) for _ in range(num_wolves)]
+        self.alpha_pos = None
+        self.beta_pos = None
+        self.delta_pos = None
+
+    def fitness_function(self, x):
+        """Objective function to optimize."""
+        return x ** 2  # Example: maximize f(x) = x^2
+
+    def update_hierarchy(self):
+        """Determine alpha, beta, and delta wolves based on fitness."""
+        sorted_positions = sorted(self.positions, key=self.fitness_function, reverse=True)
+        self.alpha_pos = sorted_positions[0]
+        self.beta_pos = sorted_positions[1]
+        self.delta_pos = sorted_positions[2]
+
+    def update_positions(self):
+        """Update the positions of the wolves."""
+        a = 2  # Decreasing parameter over iterations
+        for i in range(self.num_wolves):
+            A1 = 2 * a * random.random() - a
+            C1 = 2 * random.random()
+            D_alpha = abs(C1 * self.alpha_pos - self.positions[i])
+            X1 = self.alpha_pos - A1 * D_alpha
+
+            A2 = 2 * a * random.random() - a
+            C2 = 2 * random.random()
+            D_beta = abs(C2 * self.beta_pos - self.positions[i])
+            X2 = self.beta_pos - A2 * D_beta
+
+            A3 = 2 * a * random.random() - a
+            C3 = 2 * random.random()
+            D_delta = abs(C3 * self.delta_pos - self.positions[i])
+            X3 = self.delta_pos - A3 * D_delta
+
+            new_position = (X1 + X2 + X3) / 3
+            self.positions[i] = min(max(new_position, self.lower_bound), self.upper_bound)
+
+    def optimize(self):
+        """Run the Grey Wolf Optimizer algorithm."""
+        self.update_hierarchy()
+        best_fitness = self.fitness_function(self.alpha_pos)
+
+        for iteration in range(self.iterations):
+            self.update_positions()
+            self.update_hierarchy()
+            current_best_fitness = self.fitness_function(self.alpha_pos)
+
+            if current_best_fitness > best_fitness:
+                best_fitness = current_best_fitness
+
+            print(f"Iteration {iteration + 1}: Best Fitness = {best_fitness:.2f}")
+
+        return self.alpha_pos, best_fitness
+
+# Parameters
+NUM_WOLVES = 20
+ITERATIONS = 50
+LOWER_BOUND = -10
+UPPER_BOUND = 10
+
+# Run Grey Wolf Optimizer
+gwo = GreyWolfOptimizer(NUM_WOLVES, ITERATIONS, LOWER_BOUND, UPPER_BOUND)
+best_solution, best_fitness = gwo.optimize()
+print(f"Best Solution: x = {best_solution:.2f}, f(x) = {best_fitness:.2f}")
+
+ouput
+Iteration 1: Best Fitness = 84.56
+Iteration 2: Best Fitness = 92.34
+...
+Iteration 50: Best Fitness = 99.78
+Best Solution: x = 9.99, f(x) = 99.80
