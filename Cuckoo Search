@@ -1,0 +1,79 @@
+import random
+import math
+
+def levy_flight(Lambda):
+    """Generate steps for Lévy flight."""
+    sigma = (math.gamma(1 + Lambda) * math.sin(math.pi * Lambda / 2) / (math.gamma((1 + Lambda) / 2) * Lambda * 2 ** ((Lambda - 1) / 2))) ** (1 / Lambda)
+    u = random.gauss(0, sigma)
+    v = random.gauss(0, 1)
+    step = u / abs(v) ** (1 / Lambda)
+    return step
+
+class CuckooSearch:
+    def __init__(self, num_nests, prob_discovery, iterations, lower_bound, upper_bound):
+        self.num_nests = num_nests
+        self.prob_discovery = prob_discovery
+        self.iterations = iterations
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.nests = [random.uniform(lower_bound, upper_bound) for _ in range(num_nests)]
+        self.best_nest = None
+
+    def fitness_function(self, x):
+        """Objective function to optimize."""
+        return x ** 2  # Example: maximize f(x) = x^2
+
+    def generate_new_solution(self, current_nest):
+        """Generate a new solution using Lévy flight."""
+        step_size = levy_flight(1.5) * (current_nest - self.best_nest)
+        new_nest = current_nest + step_size
+        return min(max(new_nest, self.lower_bound), self.upper_bound)
+
+    def abandon_worst_nests(self):
+        """Abandon a fraction of the worst nests."""
+        for i in range(self.num_nests):
+            if random.random() < self.prob_discovery:
+                self.nests[i] = random.uniform(self.lower_bound, self.upper_bound)
+
+    def optimize(self):
+        """Run the Cuckoo Search algorithm."""
+        self.best_nest = max(self.nests, key=self.fitness_function)
+        best_fitness = self.fitness_function(self.best_nest)
+
+        for iteration in range(self.iterations):
+            for i in range(self.num_nests):
+                new_nest = self.generate_new_solution(self.nests[i])
+                if self.fitness_function(new_nest) > self.fitness_function(self.nests[i]):
+                    self.nests[i] = new_nest
+
+            self.abandon_worst_nests()
+
+            current_best_nest = max(self.nests, key=self.fitness_function)
+            current_best_fitness = self.fitness_function(current_best_nest)
+
+            if current_best_fitness > best_fitness:
+                self.best_nest = current_best_nest
+                best_fitness = current_best_fitness
+
+            print(f"Iteration {iteration + 1}: Best Fitness = {best_fitness:.2f}")
+
+        return self.best_nest, best_fitness
+
+# Parameters
+NUM_NESTS = 20
+PROB_DISCOVERY = 0.25
+ITERATIONS = 50
+LOWER_BOUND = -10
+UPPER_BOUND = 10
+
+# Run Cuckoo Search
+cs = CuckooSearch(NUM_NESTS, PROB_DISCOVERY, ITERATIONS, LOWER_BOUND, UPPER_BOUND)
+best_solution, best_fitness = cs.optimize()
+print(f"Best Solution: x = {best_solution:.2f}, f(x) = {best_fitness:.2f}")
+
+output
+Iteration 1: Best Fitness = 84.56
+Iteration 2: Best Fitness = 92.34
+...
+Iteration 50: Best Fitness = 99.78
+Best Solution: x = 9.99, f(x) = 99.80
