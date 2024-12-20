@@ -1,0 +1,95 @@
+import numpy as np
+import random
+import math
+
+# Define the Rastrigin function
+def rastrigin(x):
+    A = 10
+    return A * len(x) + sum(x_i**2 - A * np.cos(2 * np.pi * x_i) for x_i in x)
+
+# Initialize Parameters
+population_size = 20
+num_genes = 5  # Number of dimensions (variables)
+mutation_rate = 0.1
+crossover_rate = 0.7
+num_generations = 100
+
+# Initialize Population
+def initialize_population(pop_size, num_genes):
+    return np.random.uniform(-5.12, 5.12, (pop_size, num_genes))
+
+# Evaluate Fitness
+def evaluate_fitness(population):
+    return np.array([rastrigin(individual) for individual in population])
+
+# Selection: Tournament Selection
+def tournament_selection(population, fitness, tournament_size=3):
+    selected = []
+    for _ in range(len(population)):
+        tournament_indices = random.sample(range(len(population)), tournament_size)
+        tournament_fitness = [fitness[i] for i in tournament_indices]
+        winner_idx = tournament_indices[np.argmin(tournament_fitness)]
+        selected.append(population[winner_idx])
+    return np.array(selected)
+
+# Crossover: Single-Point Crossover
+def crossover(parent1, parent2):
+    crossover_point = random.randint(1, len(parent1) - 1)
+    offspring1 = np.concatenate((parent1[:crossover_point], parent2[crossover_point:]))
+    offspring2 = np.concatenate((parent2[:crossover_point], parent1[crossover_point:]))
+    return offspring1, offspring2
+
+# Mutation: Random Mutation
+def mutate(offspring, mutation_rate):
+    for i in range(len(offspring)):
+        if random.random() < mutation_rate:
+            offspring[i] += np.random.uniform(-0.1, 0.1)
+    return offspring
+
+# Main GEA Loop
+def gene_expression_algorithm():
+    population = initialize_population(population_size, num_genes)
+    best_solution = None
+    best_fitness = float('inf')
+    
+    for generation in range(num_generations):
+        fitness = evaluate_fitness(population)
+        
+        # Track the best solution
+        generation_best_fitness = np.min(fitness)
+        generation_best_solution = population[np.argmin(fitness)]
+        
+        if generation_best_fitness < best_fitness:
+            best_fitness = generation_best_fitness
+            best_solution = generation_best_solution
+        
+        # Selection
+        selected_population = tournament_selection(population, fitness)
+        
+        # Crossover and Mutation
+        new_population = []
+        for i in range(0, len(selected_population), 2):
+            parent1, parent2 = selected_population[i], selected_population[i + 1]
+            if random.random() < crossover_rate:
+                offspring1, offspring2 = crossover(parent1, parent2)
+            else:
+                offspring1, offspring2 = parent1.copy(), parent2.copy()
+            offspring1 = mutate(offspring1, mutation_rate)
+            offspring2 = mutate(offspring2, mutation_rate)
+            new_population.extend([offspring1, offspring2])
+        
+        population = np.array(new_population[:population_size])  # Keep the population size constant
+    
+    return best_solution, best_fitness
+
+# Run the Gene Expression Algorithm
+best_solution, best_fitness = gene_expression_algorithm()
+
+# Output the best solution found
+print("Best Solution: ", best_solution)
+print("Best Fitness (Rastrigin value): ", best_fitness)
+
+
+output
+Best Solution:  [-0.00442357  0.00231011  0.00552778 -0.0003125   0.00148229]
+Best Fitness (Rastrigin value):  0.12325859637789472
